@@ -1,0 +1,51 @@
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+
+spring:
+  application:
+    name: sample-order-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/orders_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: payment-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.value.default.type: io.github.alexlitvinov.sample.event.OrderCreatedEvent
+        spring.json.trusted.packages: "*"
+    producer:
+      key-serializer: io.github.alexlitvinov.idembox.starter.serializer.OutboxPayloadSerializer
+      value-serializer: io.github.alexlitvinov.idembox.starter.serializer.OutboxPayloadSerializer
+
+idembox:
+  outbox:
+    enabled: true
+    poller-rate-ms: 300
+    batch-size: 50
+    immediate-flush: true
+    retention: 7d
+    max-retries: 5
+  idempotency:
+    enabled: true
+    default-ttl: 7d
+    default-lock-timeout: 2m
+    cleanup-cron: "0 0 2 * * *"
