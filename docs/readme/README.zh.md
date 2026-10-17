@@ -233,13 +233,13 @@ curl -i -X POST "http://localhost:8080/api/orders?customerId=cust-101&amount=450
 <dependency>
     <groupId>io.github.litvinov-alex</groupId>
     <artifactId>idembox-spring-boot-starter</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
 </dependency>
 ```
 
 #### Gradle (`build.gradle`):
 ```groovy
-implementation 'io.github.litvinov-alex:idembox-spring-boot-starter:0.1.0-SNAPSHOT'
+implementation 'io.github.litvinov-alex:idembox-spring-boot-starter:0.1.0'
 ```
 
 ---
