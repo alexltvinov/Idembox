@@ -17,6 +17,10 @@
     <name>Sample Order Service</name>
     <description>Example microservice showing how to use idembox-spring-boot-starter</description>
 
+    <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
+    </properties>
+
     <dependencies>
         <!-- Idembox Starter -->
         <dependency>

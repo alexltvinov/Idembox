@@ -29,7 +29,7 @@ public class OrderController {
 
     /**
      * Endpoint to manually trigger an Outbox event.
-     * Example: POST http://localhost:8080/api/orders?customerId=user-42&amount=1500
+     * Example: {@code POST http://localhost:8080/api/orders?customerId=user-42&amount=1500}
      */
     @PostMapping
     public ResponseEntity<Map<String, Object>> createOrder(
