@@ -231,7 +231,7 @@ El pedido existente se devuelve de inmediato sin realizar cobros dobles ni gener
 #### Maven (`pom.xml`):
 ```xml
 <dependency>
-    <groupId>io.github.alexlitvinov</groupId>
+    <groupId>io.github.litvinov-alex</groupId>
     <artifactId>idembox-spring-boot-starter</artifactId>
     <version>0.1.0-SNAPSHOT</version>
 </dependency>
@@ -239,7 +239,7 @@ El pedido existente se devuelve de inmediato sin realizar cobros dobles ni gener
 
 #### Gradle (`build.gradle`):
 ```groovy
-implementation 'io.github.alexlitvinov:idembox-spring-boot-starter:0.1.0-SNAPSHOT'
+implementation 'io.github.litvinov-alex:idembox-spring-boot-starter:0.1.0-SNAPSHOT'
 ```
 
 ---
