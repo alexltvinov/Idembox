@@ -191,12 +191,15 @@
                     <plugin>
                         <groupId>org.sonatype.central</groupId>
                         <artifactId>central-publishing-maven-plugin</artifactId>
-                        <version>0.6.0</version>
+                        <version>0.7.0</version>
                         <extensions>true</extensions>
                         <configuration>
                             <publishingServerId>central</publishingServerId>
                             <autoPublish>true</autoPublish>
-                            <waitUntil>published</waitUntil>
+                            <waitUntil>validated</waitUntil>
+                            <excludeArtifacts>
+                                <param>sample-order-service</param>
+                            </excludeArtifacts>
                         </configuration>
                     </plugin>
                 </plugins>
