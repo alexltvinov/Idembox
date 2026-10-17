@@ -40,9 +40,11 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration;
 import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.ClassUtils;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -477,20 +479,53 @@ public class IdemboxAutoConfiguration {
                 IdemboxProperties properties,
                 ApplicationEventPublisher eventPublisher,
                 IdemboxMetrics idemboxMetrics,
-                ObjectProvider<io.micrometer.tracing.Tracer> tracerProvider) {
+                ApplicationContext applicationContext) {
             ObjectMapper om = objectMapperProvider != null ? objectMapperProvider.getIfAvailable() : null;
             if (om == null) {
                 om = new ObjectMapper();
                 om.findAndRegisterModules();
+            }
+            if (ClassUtils.isPresent("io.micrometer.tracing.Tracer", applicationContext.getClassLoader())) {
+                return TracingHelper.createPublisher(
+                        outboxRepository,
+                        om,
+                        properties,
+                        eventPublisher,
+                        idemboxMetrics,
+                        applicationContext
+                );
             }
             return new DefaultOutboxPublisher(
                     outboxRepository,
                     om,
                     properties,
                     eventPublisher,
-                    idemboxMetrics,
-                    tracerProvider.getIfAvailable()
+                    idemboxMetrics
             );
+        }
+
+        private static class TracingHelper {
+            static OutboxPublisher createPublisher(
+                    OutboxRepository outboxRepository,
+                    ObjectMapper om,
+                    IdemboxProperties properties,
+                    ApplicationEventPublisher eventPublisher,
+                    IdemboxMetrics idemboxMetrics,
+                    ApplicationContext context) {
+                io.micrometer.tracing.Tracer tracer = null;
+                try {
+                    tracer = context.getBeanProvider(io.micrometer.tracing.Tracer.class).getIfAvailable();
+                } catch (Throwable ignored) {
+                }
+                return new DefaultOutboxPublisher(
+                        outboxRepository,
+                        om,
+                        properties,
+                        eventPublisher,
+                        idemboxMetrics,
+                        tracer
+                );
+            }
         }
 
         static int parseIntConfig(Object value, int defaultValue) {

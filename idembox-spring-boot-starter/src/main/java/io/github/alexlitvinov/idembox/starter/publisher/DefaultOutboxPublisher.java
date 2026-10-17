@@ -67,7 +67,7 @@ public class DefaultOutboxPublisher implements OutboxPublisher {
     private final IdemboxProperties properties;
     private final ApplicationEventPublisher eventPublisher;
     private final IdemboxMetrics metrics;
-    private final Tracer tracer;
+    private final Object tracer;
 
     public DefaultOutboxPublisher(
             OutboxRepository outboxRepository,
@@ -84,7 +84,7 @@ public class DefaultOutboxPublisher implements OutboxPublisher {
             IdemboxProperties properties,
             ApplicationEventPublisher eventPublisher,
             IdemboxMetrics metrics,
-            Tracer tracer) {
+            Object tracer) {
         this.outboxRepository = outboxRepository;
         this.objectMapper = objectMapper;
         this.properties = properties;
@@ -299,22 +299,31 @@ public class DefaultOutboxPublisher implements OutboxPublisher {
         if (tracer == null || headers.containsKey(TRACE_PARENT_HEADER)) {
             return;
         }
-        try {
-            Span currentSpan = tracer.currentSpan();
-            if (currentSpan != null) {
-                TraceContext context = currentSpan.context();
-                String normalizedTraceId = normalizeHexId(context.traceId(), 32);
-                String normalizedSpanId = normalizeHexId(context.spanId(), 16);
-                if (normalizedTraceId != null && normalizedSpanId != null) {
-                    String flags = Boolean.parseBoolean(String.valueOf(context.sampled())) ? "01" : "00";
-                    headers.put(TRACE_PARENT_HEADER, List.of("00-" + normalizedTraceId + "-" + normalizedSpanId + "-" + flags));
-                    if (!headers.containsKey("b3")) {
-                        headers.put("b3", List.of(normalizedTraceId + "-" + normalizedSpanId));
+        TracingHelper.injectTracingHeaders(tracer, headers);
+    }
+
+    private static class TracingHelper {
+        static void injectTracingHeaders(Object tracerObj, Map<String, List<String>> headers) {
+            if (!(tracerObj instanceof Tracer tracer)) {
+                return;
+            }
+            try {
+                Span currentSpan = tracer.currentSpan();
+                if (currentSpan != null) {
+                    TraceContext context = currentSpan.context();
+                    String normalizedTraceId = normalizeHexId(context.traceId(), 32);
+                    String normalizedSpanId = normalizeHexId(context.spanId(), 16);
+                    if (normalizedTraceId != null && normalizedSpanId != null) {
+                        String flags = Boolean.parseBoolean(String.valueOf(context.sampled())) ? "01" : "00";
+                        headers.put(TRACE_PARENT_HEADER, List.of("00-" + normalizedTraceId + "-" + normalizedSpanId + "-" + flags));
+                        if (!headers.containsKey("b3")) {
+                            headers.put("b3", List.of(normalizedTraceId + "-" + normalizedSpanId));
+                        }
                     }
                 }
+            } catch (Throwable throwable) {
+                log.trace("Failed to extract current trace context", throwable);
             }
-        } catch (Throwable throwable) {
-            log.trace("Failed to extract current trace context", throwable);
         }
     }
 

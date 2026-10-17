@@ -1094,4 +1094,34 @@ class IdemboxAutoConfigurationTest {
                     assertThat(context.getBean(ObjectMapper.class)).isSameAs(customMapper);
                 });
     }
+
+    @Test
+    @DisplayName("Should wire Tracer into OutboxPublisher when Tracer bean is present in context")
+    void shouldWireTracerWhenTracerBeanPresent() {
+        io.micrometer.tracing.Tracer mockTracer = mock(io.micrometer.tracing.Tracer.class);
+        contextRunner.withUserConfiguration(TestInfrastructureConfig.class)
+                .withBean("customTracer", io.micrometer.tracing.Tracer.class, () -> mockTracer)
+                .run(context -> {
+                    assertThat(context).hasNotFailed();
+                    assertThat(context).hasSingleBean(OutboxPublisher.class);
+                    OutboxPublisher publisher = context.getBean(OutboxPublisher.class);
+                    assertThat(publisher).isInstanceOf(DefaultOutboxPublisher.class);
+                    assertThat(org.springframework.test.util.ReflectionTestUtils.getField(publisher, "tracer"))
+                            .isSameAs(mockTracer);
+                });
+    }
+
+    @Test
+    @DisplayName("Should create OutboxPublisher with null Tracer when Tracer bean is absent")
+    void shouldCreateOutboxPublisherWithNullTracerWhenAbsent() {
+        contextRunner.withUserConfiguration(TestInfrastructureConfig.class)
+                .run(context -> {
+                    assertThat(context).hasNotFailed();
+                    assertThat(context).hasSingleBean(OutboxPublisher.class);
+                    OutboxPublisher publisher = context.getBean(OutboxPublisher.class);
+                    assertThat(publisher).isInstanceOf(DefaultOutboxPublisher.class);
+                    assertThat(org.springframework.test.util.ReflectionTestUtils.getField(publisher, "tracer"))
+                            .isNull();
+                });
+    }
 }
